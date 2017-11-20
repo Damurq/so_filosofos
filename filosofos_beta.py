@@ -9,46 +9,46 @@ TIEMPO_TOTAL = 3
 class filosofo(threading.Thread):
     semaforo = threading.Lock() #SEMAFORO BINARIO ASEGURA LA EXCLUSION MUTUA
     estado = [] #PARA CONOCER EL ESTADO DE CADA FILOSOFO
-    sinc = [] #PARA SINCRONIZAR ENTRE FILOSOFOS
+    tenedores = [] #ARRAY DE SEMAFOROS PARA SINCRONIZAR ENTRE FILOSOFOS, MUESTRA QUIEN ESTA EN COLA DEL TENEDOR
     count=0
 
     def __init__(self):
-        super(filosofo,self).__init__()      #AUN NO CACHO BIEN ESTE TIPO DE HERENCIA
+        super().__init__()      #HERENCIA
         self.id=filosofo.count #DESIGNA EL ID AL FILOSOFO
         filosofo.count+=1 #AGREGA UNO A LA CANT DE FILOSOFOS
         filosofo.estado.append('PENSANDO') #EL FILOSOFO ENTRA A LA MESA EN ESTADO PENSANDO
-        filosofo.sinc.append(threading.Semaphore(0)) #DE CIERTA FORMA ASEGURA QUE EL PRIMERO EN QUERER COMER SI O SI LO HAGA
+        filosofo.tenedores.append(threading.Semaphore(0)) #AGREGA EL SEMAFORO DE SU TENEDOR( TENEDOR A LA IZQUIERDA)
         print("FILOSOFO {0} - PENSANDO".format(self.id))
 
     def __del__(self):
         print("FILOSOFO {0} - Se para de la mesa".format(self.id))  #NECESARIO PARA SABER CUANDO TERMINA EL THREAD
 
     def pensar(self):
-        time.sleep(random.randint(0,5)) #CADA FILOSOFO SE TOMA DISTINTO TIEMPO PARA PENSAR ALEATORIO
+        time.sleep(random.randint(0,5)) #CADA FILOSOFO SE TOMA DISTINTO TIEMPO PARA PENSAR, ALEATORIO
 
     def derecha(self,i):
         return (i-1)%N #BUSCAMOS EL INDICE DE LA DERECHA
 
     def izquierda(self,i):
-        return(i+1)%N
+        return(i+1)%N #BUSCAMOS EL INDICE DE LA IZQUIERDA
 
-    def canEat(self,i):
+    def verificar(self,i):
         if filosofo.estado[i] == 'HAMBRIENTO' and filosofo.estado[self.izquierda(i)] != 'COMIENDO' and filosofo.estado[self.derecha(i)] != 'COMIENDO':
             filosofo.estado[i]='COMIENDO'
-            filosofo.sinc[i].release()
+            filosofo.tenedores[i].release()  #SI SUS VECINOS NO ESTAN COMIENDO AUMENTA EL SEMAFORO DEL TENEDOR Y CAMBIA SU ESTADO A COMIENDO
 
     def tomar(self):
         filosofo.semaforo.acquire() #SEÑALA QUE TOMARA LOS TENEDORES (EXCLUSION MUTUA)
         filosofo.estado[self.id] = 'HAMBRIENTO'
-        self.canEat(self.id) #VERIFICA SUS VECINOS, SI NO PUEDE COMER NO SE BLOQUEARA EN EL SIGUIENTE ACQUIRE
+        self.verificar(self.id) #VERIFICA SUS VECINOS, SI NO PUEDE COMER NO SE BLOQUEARA EN EL SIGUIENTE ACQUIRE
         filosofo.semaforo.release() #SEÑALA QUE YA DEJO DE INTENTAR TOMAR LOS TENEDORES (CAMBIAR EL ARRAY ESTADO)
-        filosofo.sinc[self.id].acquire() #SOLO SI PODIA TOMARLOS SE BLOQUEARA
+        filosofo.tenedores[self.id].acquire() #SOLO SI PODIA TOMARLOS SE BLOQUEARA CON ESTADO COMIENDO
 
     def soltar(self):
         filosofo.semaforo.acquire() #SEÑALA QUE SOLTARA LOS TENEDORES
         filosofo.estado[self.id] = 'PENSANDO'
-        self.canEat(self.izquierda(self.id))
-        self.canEat(self.derecha(self.id))
+        self.verificar(self.izquierda(self.id))
+        self.verificar(self.derecha(self.id))
         filosofo.semaforo.release() #YA TERMINO DE MANIPULAR TENEDORES
 
     def comer(self):
