@@ -5,7 +5,7 @@ import threading
 import csv
 import traceback
 
-N = 6                   # Número de filosofos y tenedores
+N = 51                   # Número de filosofos y tenedores
 NUMERO_MAXIMO_COMIDAS = 2   # Representa el número maximo de comidas por filosofo
 # Tiempo de espera entre las comidas y pensamientos 
 # --Este en una lista de dos numeros que representa un intervalo que se utilizará para generar una
