@@ -28,13 +28,4 @@ def comparacion_aumento_filosofos():
         title = 'Grafica de lineas que muestra el total de pensamientos con diferentes cantidades de filosofos'
         diagramas(datos["num_filosofos"],datos["num_pensamientos"],"filosofos","numero de pensamiento",title)
         
-def comidas_pensamientos():
-    comidas=pd.read_csv('comidas.csv', sep=',', header=0)
-    pensamientos=pd.read_csv('pensamientos.csv', sep=',', header=0)
-    title = 'Grafica de lineas que muesta el tiempo de ejecución en segundos del programa'
-    diagramas(comidas["id_filosofo"],comidas["tiempo"],"filosofos","tiempo",title,"barras")
-    title = 'Grafica de lineas que muestra el total de comidas con diferentes cantidades de filosofos'
-    diagramas(pensamientos["id_filosofo"],pensamientos["tiempo"],"filosofos","tiempo",title,"barras")
-        
-# comparacion_aumento_filosofos()
-comidas_pensamientos()
+comparacion_aumento_filosofos()
