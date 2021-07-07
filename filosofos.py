@@ -10,7 +10,7 @@ MAXIMUM_NUMBER_MEALS = 2   # Representa el número maximo de comidas por filosof
 # Tiempo de espera entre las comidas y pensamientos 
 # --Este en una lista de dos numeros que representa un intervalo que se utilizará para generar una
 # --cantidad de segundos aleatorios (en caso de ser iguales el número de segundos es constante)
-STANDBY_TIME = [1,1]       
+STANDBY_TIME = [1,3]       
 
 # Almacena la información de los pensamientos - quien estaba pensando y cuanto duro
 pensamientos=[]
@@ -151,6 +151,7 @@ if __name__=="__main__":
     except (KeyboardInterrupt, SystemExit):
         fin = time.time()
         comparador[0]["tiempo"]=str(fin-inicio)
+        comparador[0]["num_comidas"],comparador[0]["num_pensamientos"] = len(comidas),len(pensamientos)
         # Guardamos la información de la corrida
         documentar()
         print("exit")
