@@ -19,6 +19,7 @@ def diagrama_lineas(datos1,datos2,xlabel="",ylabel="",title=""):
 def comparacion_aumento_filosofos():
     datos=pd.read_csv('comparador.csv', sep=',', header=0)
     if len(datos["num_filosofos"])==len(datos["num_tenedores"]):
+        print(datos)
         title = 'Grafica de lineas que muesta el tiempo de ejecución en segundos del programa'
         diagrama_lineas(datos["num_filosofos"],datos["tiempo"],"filosofos","segundos",title)
         title = 'Grafica de lineas que muestra el total de comidas con diferentes cantidades de filosofos'

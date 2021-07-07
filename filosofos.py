@@ -5,7 +5,7 @@ import threading
 import csv
 import traceback
 
-N = 5000                    # Número de filosofos y tenedores
+N = 6                   # Número de filosofos y tenedores
 NUMERO_MAXIMO_COMIDAS = 2   # Representa el número maximo de comidas por filosofo
 # Tiempo de espera entre las comidas y pensamientos 
 # --Este en una lista de dos numeros que representa un intervalo que se utilizará para generar una
@@ -19,7 +19,7 @@ comparador=[{
     "num_tenedores":N,
     "tiempo":"",
     "num_comidas":0,
-    "num_pensaientos":0
+    "num_pensamientos":0
 }]
 with open('comparador.csv', mode='r') as comp:
     reader = csv.DictReader(comp)
