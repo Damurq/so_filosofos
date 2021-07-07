@@ -5,15 +5,18 @@ import threading
 import csv
 import traceback
 
-N = 51                   # Número de filosofos y tenedores
-NUMERO_MAXIMO_COMIDAS = 2   # Representa el número maximo de comidas por filosofo
+N = 10                    # Número de filosofos y tenedores
+MAXIMUM_NUMBER_MEALS = 2   # Representa el número maximo de comidas por filosofo
 # Tiempo de espera entre las comidas y pensamientos 
 # --Este en una lista de dos numeros que representa un intervalo que se utilizará para generar una
 # --cantidad de segundos aleatorios (en caso de ser iguales el número de segundos es constante)
-TIEMPO_ESPERA = [1,1]       
+STANDBY_TIME = [1,1]       
 
+# Almacena la información de los pensamientos - quien estaba pensando y cuanto duro
 pensamientos=[]
+# Almacena la información de las comidas - quien estaba comiendo y cuanto duro
 comidas=[]
+# Almacena la información de cada corrida para ser comparada despues
 comparador=[{
     "num_filosofos":N, 
     "num_tenedores":N,
@@ -21,25 +24,30 @@ comparador=[{
     "num_comidas":0,
     "num_pensamientos":0
 }]
+
+# Leemos la información del archivo que sirve para comparar las corridas
 with open('comparador.csv', mode='r') as comp:
     reader = csv.DictReader(comp)
     for row in reader:   
         comparador.append(row)     
 
-class filosofo(threading.Thread):
-    semaforo = threading.Lock() #SEMAFORO BINARIO ASEGURA LA EXCLUSION MUTUA
-    estado = [] #PARA CONOCER EL ESTADO DE CADA FILOSOFO
-    tenedores = [] #ARRAY DE SEMAFOROS PARA SINCRONIZAR ENTRE FILOSOFOS, MUESTRA QUIEN ESTA EN COLA DEL TENEDOR
+class Filosofo(threading.Thread):
+    """ 
+    Clase Filosofo, actua como un Thread que necesita dos tenedores adyacentes para comer()
+    """
+    semaforo = threading.Lock()     # SEMAFORO BINARIO ASEGURA LA EXCLUSION MUTUA
+    estado = []                     # PARA CONOCER EL ESTADO DE CADA FILOSOFO
+    tenedores = []                  # ARRAY DE SEMAFOROS PARA SINCRONIZAR ENTRE FILOSOFOS, MUESTRA QUIEN ESTA EN COLA DEL TENEDOR
     count=0
     food=[]
     thoughts=[]
 
     def __init__(self):
-        super().__init__()      #HERENCIA
-        self.id=filosofo.count #DESIGNA EL ID AL FILOSOFO
-        filosofo.count+=1 #AGREGA UNO A LA CANT DE FILOSOFOS
-        filosofo.estado.append('PENSANDO') #EL FILOSOFO ENTRA A LA MESA EN ESTADO PENSANDO
-        filosofo.tenedores.append(threading.Semaphore(0)) #AGREGA EL SEMAFORO DE SU TENEDOR( TENEDOR A LA IZQUIERDA)
+        super().__init__()          # HERENCIA
+        self.id=Filosofo.count      # DESIGNA EL ID AL FILOSOFO
+        Filosofo.count+=1           # AGREGA UNO A LA CANT DE FILOSOFOS
+        Filosofo.estado.append('PENSANDO')                # EL FILOSOFO ENTRA A LA MESA EN ESTADO PENSANDO
+        Filosofo.tenedores.append(threading.Semaphore(0)) # AGREGA EL SEMAFORO DE SU TENEDOR( TENEDOR A LA IZQUIERDA)
         self.food.append(0)
         self.thoughts.append(0)
         print("FILOSOFO {0} - PENSANDO".format(self.id))
@@ -49,23 +57,23 @@ class filosofo(threading.Thread):
 
     def pensar(self):
         inicio = time.time()
-        time.sleep(random.randint(TIEMPO_ESPERA[0],TIEMPO_ESPERA[1])) #CADA FILOSOFO SE TOMA DISTINTO TIEMPO PARA PENSAR, ALEATORIO
+        time.sleep(random.randint(STANDBY_TIME[0],STANDBY_TIME[1])) #CADA FILOSOFO SE TOMA DISTINTO TIEMPO PARA PENSAR, ALEATORIO
         fin = time.time()
         pensamientos.append({"id_filosofo":self.id, 
         "id_pensamiento":self.thoughts[self.id],
         "tiempo":str(fin-inicio)})
 
     def derecha(self,i):
-        return (i-1)%N #BUSCAMOS EL INDICE DE LA DERECHA
+        return (i-1)%N  # BUSCAMOS EL INDICE DE LA DERECHA
 
     def izquierda(self,i):
-        return(i+1)%N #BUSCAMOS EL INDICE DE LA IZQUIERDA
+        return(i+1)%N   # BUSCAMOS EL INDICE DE LA IZQUIERDA
 
     def verificar(self,i):
         inicio = time.time()
-        if filosofo.estado[i] == 'HAMBRIENTO' and filosofo.estado[self.izquierda(i)] != 'COMIENDO' and filosofo.estado[self.derecha(i)] != 'COMIENDO':
-            filosofo.estado[i]='COMIENDO'
-            filosofo.tenedores[i].release()  #SI SUS VECINOS NO ESTAN COMIENDO AUMENTA EL SEMAFORO DEL TENEDOR Y CAMBIA SU ESTADO A COMIENDO
+        if Filosofo.estado[i] == 'HAMBRIENTO' and (Filosofo.estado[self.izquierda(i)] != 'COMIENDO' and Filosofo.estado[self.derecha(i)] != 'COMIENDO'):
+            Filosofo.estado[i]='COMIENDO'
+            Filosofo.tenedores[i].release()  # SI SUS VECINOS NO ESTAN COMIENDO AUMENTA EL SEMAFORO DEL TENEDOR Y CAMBIA SU ESTADO A COMIENDO
             fin = time.time()
             self.food[self.id]+=1
             comidas.append({"id_filosofo":self.id, 
@@ -73,43 +81,47 @@ class filosofo(threading.Thread):
             "tiempo":str(fin-inicio)})
 
     def tomar(self):
-        filosofo.semaforo.acquire() #SEÑALA QUE TOMARA LOS TENEDORES (EXCLUSION MUTUA)
-        filosofo.estado[self.id] = 'HAMBRIENTO'
-        self.verificar(self.id) #VERIFICA SUS VECINOS, SI NO PUEDE COMER NO SE BLOQUEARA EN EL SIGUIENTE ACQUIRE
-        filosofo.semaforo.release() #SEÑALA QUE YA DEJO DE INTENTAR TOMAR LOS TENEDORES (CAMBIAR EL ARRAY ESTADO)
-        filosofo.tenedores[self.id].acquire() #SOLO SI PODIA TOMARLOS SE BLOQUEARA CON ESTADO COMIENDO
+        Filosofo.semaforo.acquire()             # SEÑALA QUE TOMARA LOS TENEDORES (EXCLUSION MUTUA)
+        Filosofo.estado[self.id] = 'HAMBRIENTO'
+        self.verificar(self.id)                 # VERIFICA SUS VECINOS, SI NO PUEDE COMER NO SE BLOQUEARA EN EL SIGUIENTE ACQUIRE
+        Filosofo.semaforo.release()             # SEÑALA QUE YA DEJO DE INTENTAR TOMAR LOS TENEDORES (CAMBIAR EL ARRAY ESTADO)
+        Filosofo.tenedores[self.id].acquire()   # SOLO SI PODIA TOMARLOS SE BLOQUEARA CON ESTADO COMIENDO
 
     def soltar(self):
-        filosofo.semaforo.acquire() #SEÑALA QUE SOLTARA LOS TENEDORES
-        filosofo.estado[self.id] = 'PENSANDO'
+        Filosofo.semaforo.acquire()             # SEÑALA QUE SOLTARA LOS TENEDORES
+        Filosofo.estado[self.id] = 'PENSANDO'
         self.verificar(self.izquierda(self.id))
         self.verificar(self.derecha(self.id))
-        filosofo.semaforo.release() #YA TERMINO DE MANIPULAR TENEDORES
+        Filosofo.semaforo.release()             # YA TERMINO DE MANIPULAR TENEDORES
 
     def comer(self):
         print("FILOSOFO {} COMIENDO".format(self.id))
-        time.sleep(random.randint(TIEMPO_ESPERA[0],TIEMPO_ESPERA[1])) #TIEMPO ARBITRARIO PARA COMER
+        time.sleep(random.randint(STANDBY_TIME[0],STANDBY_TIME[1])) # TIEMPO ARBITRARIO PARA COMER
         print("FILOSOFO {} TERMINO DE COMER".format(self.id))
         
     def run(self):
-        for i in range(NUMERO_MAXIMO_COMIDAS):
-            self.pensar() #EL FILOSOFO PIENSA
-            self.tomar() #AGARRA LOS TENEDORES CORRESPONDIENTES
-            self.comer() #COME
-            self.soltar() #SUELTA LOS TENEDORES
+        for i in range(MAXIMUM_NUMBER_MEALS):
+            self.pensar()   # EL FILOSOFO PIENSA
+            self.tomar()    # AGARRA LOS TENEDORES CORRESPONDIENTES
+            self.comer()    # COME
+            self.soltar()   # SUELTA LOS TENEDORES
+
 
 def main():
-    lista=[]
-    for i in range(N):
-        lista.append(filosofo()) #AGREGA UN FILOSOFO A LA LISTA
-
+    """ 
+    Ejecuta los filosofos
+    """
+    lista=[Filosofo() for i in range(N)]    # AGREGA UN FILOSOFO A LA LISTA
     for f in lista:
-        f.start() #ES EQUIVALENTE A RUN()
-
+        f.start()                           # ES EQUIVALENTE A RUN()
     for f in lista:
-        f.join() #BLOQUEA HASTA QUE TERMINA EL THREAD
+        f.join()                            # BLOQUEA HASTA QUE TERMINA EL THREAD
+
 
 def documentar():
+    """ 
+    Guardar la información de la corrida.
+    """
     with open('comidas.csv', 'w') as c:
         fieldnames_c = ["id_filosofo", "id_comida","tiempo"]
         writer_c = csv.DictWriter(c,fieldnames=fieldnames_c)
@@ -126,6 +138,7 @@ def documentar():
         writer_comp.writeheader()
         writer_comp.writerows(comparador)   
 
+
 if __name__=="__main__":
     try:
         inicio = time.time()
@@ -133,15 +146,17 @@ if __name__=="__main__":
         fin = time.time()
         comparador[0]["tiempo"]=str(fin-inicio)
         comparador[0]["num_comidas"],comparador[0]["num_pensamientos"] = len(comidas),len(pensamientos)
+        # Guardamos la información de la corrida
         documentar()
     except (KeyboardInterrupt, SystemExit):
         fin = time.time()
         comparador[0]["tiempo"]=str(fin-inicio)
+        # Guardamos la información de la corrida
         documentar()
         print("exit")
     except Exception as e:
+        # En caso de que ocurra una excepcion se guarda la información de la Excepción en un archivo llammado error.csv
         error = [str(traceback.format_exc())]
-        #print(str(error))
         with open('error.csv', 'w') as er:
             spamwriter = csv.writer(er)
             spamwriter.writerow(error)

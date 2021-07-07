@@ -1,11 +1,9 @@
 "Traceback (most recent call last):
-  File ""C:\Users\maike_000\Documents\Codigos\JAVA\Problema de la cena de los filósofos\so_filosofos\filosofos.py"", line 136, in <module>
-    documentar()
-  File ""C:\Users\maike_000\Documents\Codigos\JAVA\Problema de la cena de los filósofos\so_filosofos\filosofos.py"", line 127, in documentar
-    writer_comp.writerows(comparador)
-  File ""c:\users\maike_000\appdata\local\programs\python\python39-32\lib\csv.py"", line 157, in writerows
-    return self.writer.writerows(map(self._dict_to_list, rowdicts))
-  File ""c:\users\maike_000\appdata\local\programs\python\python39-32\lib\csv.py"", line 149, in _dict_to_list
-    raise ValueError(""dict contains fields not in fieldnames: ""
-ValueError: dict contains fields not in fieldnames: 'num_pensaientos'
+  File ""C:\Users\maike_000\Documents\Codigos\JAVA\Problema de la cena de los filósofos\so_filosofos\filosofos.py"", line 132, in <module>
+    main()
+  File ""C:\Users\maike_000\Documents\Codigos\JAVA\Problema de la cena de los filósofos\so_filosofos\filosofos.py"", line 107, in main
+    f.start() #ES EQUIVALENTE A RUN()
+  File ""c:\users\maike_000\appdata\local\programs\python\python39-32\lib\threading.py"", line 874, in start
+    _start_new_thread(self._bootstrap, ())
+RuntimeError: can't start new thread
 "
