@@ -3,16 +3,23 @@ import time
 import random
 import threading
 import csv
+import traceback
 
-N = 5
-TIEMPO_TOTAL = 5
+N = 5000                    # Número de filosofos y tenedores
+NUMERO_MAXIMO_COMIDAS = 2   # Representa el número maximo de comidas por filosofo
+# Tiempo de espera entre las comidas y pensamientos 
+# --Este en una lista de dos numeros que representa un intervalo que se utilizará para generar una
+# --cantidad de segundos aleatorios (en caso de ser iguales el número de segundos es constante)
+TIEMPO_ESPERA = [1,1]       
 
 pensamientos=[]
 comidas=[]
 comparador=[{
     "num_filosofos":N, 
     "num_tenedores":N,
-    "tiempo":""
+    "tiempo":"",
+    "num_comidas":0,
+    "num_pensaientos":0
 }]
 with open('comparador.csv', mode='r') as comp:
     reader = csv.DictReader(comp)
@@ -42,7 +49,7 @@ class filosofo(threading.Thread):
 
     def pensar(self):
         inicio = time.time()
-        time.sleep(random.randint(0,4)) #CADA FILOSOFO SE TOMA DISTINTO TIEMPO PARA PENSAR, ALEATORIO
+        time.sleep(random.randint(TIEMPO_ESPERA[0],TIEMPO_ESPERA[1])) #CADA FILOSOFO SE TOMA DISTINTO TIEMPO PARA PENSAR, ALEATORIO
         fin = time.time()
         pensamientos.append({"id_filosofo":self.id, 
         "id_pensamiento":self.thoughts[self.id],
@@ -55,9 +62,15 @@ class filosofo(threading.Thread):
         return(i+1)%N #BUSCAMOS EL INDICE DE LA IZQUIERDA
 
     def verificar(self,i):
+        inicio = time.time()
         if filosofo.estado[i] == 'HAMBRIENTO' and filosofo.estado[self.izquierda(i)] != 'COMIENDO' and filosofo.estado[self.derecha(i)] != 'COMIENDO':
             filosofo.estado[i]='COMIENDO'
             filosofo.tenedores[i].release()  #SI SUS VECINOS NO ESTAN COMIENDO AUMENTA EL SEMAFORO DEL TENEDOR Y CAMBIA SU ESTADO A COMIENDO
+            fin = time.time()
+            self.food[self.id]+=1
+            comidas.append({"id_filosofo":self.id, 
+            "id_comida":self.food[self.id],
+            "tiempo":str(fin-inicio)})
 
     def tomar(self):
         filosofo.semaforo.acquire() #SEÑALA QUE TOMARA LOS TENEDORES (EXCLUSION MUTUA)
@@ -74,18 +87,12 @@ class filosofo(threading.Thread):
         filosofo.semaforo.release() #YA TERMINO DE MANIPULAR TENEDORES
 
     def comer(self):
-        inicio = time.time()
         print("FILOSOFO {} COMIENDO".format(self.id))
-        time.sleep(random.randint(0,4)) #TIEMPO ARBITRARIO PARA COMER
-        fin = time.time()
+        time.sleep(random.randint(TIEMPO_ESPERA[0],TIEMPO_ESPERA[1])) #TIEMPO ARBITRARIO PARA COMER
         print("FILOSOFO {} TERMINO DE COMER".format(self.id))
-        self.food[self.id]+=1
-        comidas.append({"id_filosofo":self.id, 
-        "id_comida":self.food[self.id],
-        "tiempo":str(fin-inicio)})
-
+        
     def run(self):
-        for i in range(TIEMPO_TOTAL):
+        for i in range(NUMERO_MAXIMO_COMIDAS):
             self.pensar() #EL FILOSOFO PIENSA
             self.tomar() #AGARRA LOS TENEDORES CORRESPONDIENTES
             self.comer() #COME
@@ -114,7 +121,7 @@ def documentar():
         writer_p.writeheader()
         writer_p.writerows(pensamientos)
     with open('comparador.csv', 'w') as compar:
-        fieldnames_comp = ["num_filosofos", "num_tenedores","tiempo"]
+        fieldnames_comp = ["num_filosofos", "num_tenedores","tiempo","num_comidas","num_pensamientos"]
         writer_comp = csv.DictWriter(compar,fieldnames=fieldnames_comp)
         writer_comp.writeheader()
         writer_comp.writerows(comparador)   
@@ -125,11 +132,18 @@ if __name__=="__main__":
         main()
         fin = time.time()
         comparador[0]["tiempo"]=str(fin-inicio)
+        comparador[0]["num_comidas"],comparador[0]["num_pensamientos"] = len(comidas),len(pensamientos)
         documentar()
     except (KeyboardInterrupt, SystemExit):
         fin = time.time()
         comparador[0]["tiempo"]=str(fin-inicio)
         documentar()
         print("exit")
+    except Exception as e:
+        error = [str(traceback.format_exc())]
+        #print(str(error))
+        with open('error.csv', 'w') as er:
+            spamwriter = csv.writer(er)
+            spamwriter.writerow(error)
     finally:  
         print("los filosofos han termiando")
