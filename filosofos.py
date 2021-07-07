@@ -50,10 +50,10 @@ class Filosofo(threading.Thread):
         Filosofo.tenedores.append(threading.Semaphore(0)) # AGREGA EL SEMAFORO DE SU TENEDOR( TENEDOR A LA IZQUIERDA)
         self.food.append(0)
         self.thoughts.append(0)
-        print("FILOSOFO {0} - PENSANDO".format(self.id))
+        print("Filosofo {0} - PENSANDO".format(self.id))
 
     def __del__(self):
-        print("FILOSOFO {0} - Se para de la mesa".format(self.id))  #NECESARIO PARA SABER CUANDO TERMINA EL THREAD
+        print("Filosofo {0} - Se para de la mesa".format(self.id))  #NECESARIO PARA SABER CUANDO TERMINA EL THREAD
 
     def pensar(self):
         inicio = time.time()
@@ -95,9 +95,9 @@ class Filosofo(threading.Thread):
         Filosofo.semaforo.release()             # YA TERMINO DE MANIPULAR TENEDORES
 
     def comer(self):
-        print("FILOSOFO {} COMIENDO".format(self.id))
+        print("Filosofo {} COMIENDO".format(self.id))
         time.sleep(random.randint(STANDBY_TIME[0],STANDBY_TIME[1])) # TIEMPO ARBITRARIO PARA COMER
-        print("FILOSOFO {} TERMINO DE COMER".format(self.id))
+        print("Filosofo {} TERMINO DE COMER".format(self.id))
         
     def run(self):
         for i in range(MAXIMUM_NUMBER_MEALS):
