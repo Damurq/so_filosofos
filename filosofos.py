@@ -5,13 +5,13 @@ import threading
 import csv
 import traceback
 
-N = 10                    # Número de filosofos y tenedores
+N = 10                     # Número de filosofos y tenedores
 MAXIMUM_NUMBER_MEALS = 2   # Representa el número maximo de comidas por filosofo
 # Tiempo de espera entre las comidas y pensamientos 
 # --Este en una lista de dos numeros que representa un intervalo que se utilizará para generar una
 # --cantidad de segundos aleatorios (en caso de ser iguales el número de segundos es constante)
-STANDBY_TIME = [1,3]       
-
+STANDBY_TIME = [1,1]       
+TENEDR = 6                  # Número de tenedores
 # Almacena la información de los pensamientos - quien estaba pensando y cuanto duro
 pensamientos=[]
 # Almacena la información de las comidas - quien estaba comiendo y cuanto duro
@@ -19,7 +19,7 @@ comidas=[]
 # Almacena la información de cada corrida para ser comparada despues
 comparador=[{
     "num_filosofos":N, 
-    "num_tenedores":N,
+    "num_tenedores":TENEDR,
     "tiempo":"",
     "num_comidas":0,
     "num_pensamientos":0
@@ -111,11 +111,26 @@ def main():
     """ 
     Ejecuta los filosofos
     """
-    lista=[Filosofo() for i in range(N)]    # AGREGA UN FILOSOFO A LA LISTA
-    for f in lista:
-        f.start()                           # ES EQUIVALENTE A RUN()
-    for f in lista:
-        f.join()                            # BLOQUEA HASTA QUE TERMINA EL THREAD
+    if TENEDR == N:
+        lista=[Filosofo() for i in range(N)]    # AGREGA UN FILOSOFO A LA LISTA
+        for f in lista:
+            f.start()                           # ES EQUIVALENTE A RUN()
+        for f in lista:
+            f.join()                            # BLOQUEA HASTA QUE TERMINA EL THREAD
+    else:
+        if TENEDR >= 2:
+            m=0
+            div=int(N/2)
+            lista=[Filosofo() for i in range(N)]    # AGREGA UN FILOSOFO A LA LISTA
+            for i in range(0,int(len(lista)/(div))):
+                for f in range(m,(div)+m):
+                    lista[f].start()                           # ES EQUIVALENTE A RUN()
+                for f in range(m,(div)+m):
+                    lista[f].join()                            # BLOQUEA HASTA QUE TERMINA EL THREAD
+                m+=div
+            if len(lista)%2 !=0:
+                lista[len(lista)-1].start()
+                lista[len(lista)-1].join()
 
 
 def documentar():
