@@ -5,13 +5,13 @@ import threading
 import csv
 import traceback
 
-N = 10                     # Número de filosofos y tenedores
+N = 10                     # Número de filosofos
 MAXIMUM_NUMBER_MEALS = 2   # Representa el número maximo de comidas por filosofo
 # Tiempo de espera entre las comidas y pensamientos 
 # --Este en una lista de dos numeros que representa un intervalo que se utilizará para generar una
 # --cantidad de segundos aleatorios (en caso de ser iguales el número de segundos es constante)
 STANDBY_TIME = [1,1]       
-TENEDR = 6                  # Número de tenedores
+TENEDR = 1                  # Número de tenedores
 # Almacena la información de los pensamientos - quien estaba pensando y cuanto duro
 pensamientos=[]
 # Almacena la información de las comidas - quien estaba comiendo y cuanto duro
@@ -120,17 +120,23 @@ def main():
     else:
         if TENEDR >= 2:
             m=0
-            div=int(N/2)
             lista=[Filosofo() for i in range(N)]    # AGREGA UN FILOSOFO A LA LISTA
-            for i in range(0,int(len(lista)/(div))):
-                for f in range(m,(div)+m):
+            lim = int(len(lista)/TENEDR)
+            for i in range(0,lim):
+                for f in range(m,TENEDR+m):
                     lista[f].start()                           # ES EQUIVALENTE A RUN()
-                for f in range(m,(div)+m):
-                    lista[f].join()                            # BLOQUEA HASTA QUE TERMINA EL THREAD
-                m+=div
-            if len(lista)%2 !=0:
-                lista[len(lista)-1].start()
-                lista[len(lista)-1].join()
+                for f in range(m,TENEDR+m):
+                    lista[f].join()
+                m+=TENEDR
+            if len(lista)%TENEDR !=0:
+                for f in range(TENEDR*lim,len(lista)):
+                    lista[f].start()                           # ES EQUIVALENTE A RUN()
+                for f in range(TENEDR*lim,len(lista)):
+                    lista[f].join()
+                    if f ==  len(lista)-1:
+                        comparador[0]["num_comidas"],comparador[0]["num_pensamientos"] = len(comidas),len(pensamientos)
+        else:
+            print("El numero de tenedores es menor a 2 ningun filosofo come y todos mueren de hambre")
 
 
 def documentar():
@@ -176,5 +182,3 @@ if __name__=="__main__":
         with open('error.csv', 'w') as er:
             spamwriter = csv.writer(er)
             spamwriter.writerow(error)
-    finally:  
-        print("los filosofos han termiando")
